@@ -9,33 +9,36 @@ namespace NotificationBackend.Infrastrucuture.WebSockets
 {
     public abstract class WebSocketHandler
     {
-        protected WebSocketConnectionManager WebSocketConnectionManager { get; set; }
+        protected WebSocketConnectionManager _webSocketConnectionManager { get; set; }
 
         public WebSocketHandler(WebSocketConnectionManager webSocketConnectionManager)
         {
-            WebSocketConnectionManager = webSocketConnectionManager;
+            _webSocketConnectionManager = webSocketConnectionManager;
         }
 
         public virtual async Task OnConnected(WebSocket socket, string tag)
         {
-            WebSocketConnectionManager.AddSocket(socket , tag);
+            _webSocketConnectionManager.AddSocket(socket , tag);
         }
 
         public virtual async Task OnDisconnected(WebSocket socket)
         {
-            await WebSocketConnectionManager.RemoveSocket(WebSocketConnectionManager.GetId(socket));
+            await _webSocketConnectionManager.RemoveSocket(_webSocketConnectionManager.GetId(socket));
         }
 
 
         public async Task SendMessageToAllSocketsWithTagAsync(string tag , string message)
         {
-            var tasks = new List<Task>();
-            var sockets = WebSocketConnectionManager.GetSockestByTag(tag);
+            var sockets = _webSocketConnectionManager.GetSockestByuserName(tag);
             foreach (var socket in sockets)
             {
-                tasks.Add(SendMessageAsync(socket , message));
+                try{
+                    await  SendMessageAsync(socket , message);
+                }catch(Exception){}
+                
             }
-            Task.WaitAll(tasks.ToArray());
+            
+            
                     
             
         }
@@ -43,23 +46,26 @@ namespace NotificationBackend.Infrastrucuture.WebSockets
         {
             if(socket.State != WebSocketState.Open)
                 return;
-
+            try{
             await socket.SendAsync(buffer: new ArraySegment<byte>(array: Encoding.ASCII.GetBytes(message),
                                                                   offset: 0, 
                                                                   count: message.Length),
                                    messageType: WebSocketMessageType.Text,
                                    endOfMessage: true,
                                    cancellationToken: CancellationToken.None);          
+            }catch(Exception){
+                await _webSocketConnectionManager.RemoveSocket(_webSocketConnectionManager.GetId(socket));
+            }
         }
 
         public async Task SendMessageAsync(string socketId, string message)
         {
-            await SendMessageAsync(WebSocketConnectionManager.GetSocketById(socketId), message);
+            await SendMessageAsync(_webSocketConnectionManager.GetSocketById(socketId), message);
         }
 
         public async Task SendMessageToAllAsync(string message)
         {
-            foreach(var pair in WebSocketConnectionManager.GetAll())
+            foreach(var pair in _webSocketConnectionManager.GetAll())
             {
                 if(pair.Value.State == WebSocketState.Open)
                     await SendMessageAsync(pair.Value, message);

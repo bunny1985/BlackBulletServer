@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -27,13 +28,43 @@ namespace NotificationBackend.Controllers
         public async Task<IActionResult> AddNotification([FromBody]NotificationViewModel model)
         {
                 var notification = new NotificationDbModel(){ 
-                    Title = model.title , Body = model.body , IsReflectedToDevice = false , recivedAt = DateTime.Now , Package = model.package , User = User.Identity.Name , 
+                    Title = model.title , Body = model.body , IsReflectedToDevice = false , recivedAt = DateTime.Now , Package = model.package , User = User.Identity.Name, 
                     Id = Guid.NewGuid()
                     };
-                await _db.Notifications.AddAsync(notification);
-                await _db.SaveChangesAsync();
+                
+                model.notificationType = "notification";
                 await _websocketHandler.SendMessageToAllSocketsWithTagAsync(User.Identity.Name , JsonConvert.SerializeObject(model));
                 return Ok();
+        }
+        [HttpPost]
+        [Route("SetClipboard")]
+        public async Task<IActionResult> SetClipBoard([FromBody]ClipboardViewModel model)
+        {
+                model.notificationType = "clipboard";
+                await _websocketHandler.SendMessageToAllSocketsWithTagAsync(User.Identity.Name , JsonConvert.SerializeObject(model));
+                return Ok();
+        }
+
+        [HttpPost]
+        [Route("IsMySocketOk")]
+        public async Task<IActionResult> GetOpenSockets()
+        {       
+            var model = new{notificationType= "ping"};
+                await _websocketHandler.SendMessageToAllSocketsWithTagAsync(User.Identity.Name , JsonConvert.SerializeObject(model));
+                var count = _websocketHandler.GetAll().Select(w => w.ToString()).ToArray().Count();
+                if(count>0)return Ok(new{ Ok= true});
+                return Ok(new{ Ok= false});
+        }
+
+        [HttpGet]
+        [Route("")]
+        public async Task<IActionResult> GetLatestNotifications()
+        {
+                var dateSince = DateTime.Now.Add( - new TimeSpan(0 , 5 , 0));
+                var notifications = _db.Notifications.Where(r => r.recivedAt >=  dateSince);
+                
+                
+                return Ok(notifications);
         }
 
 

@@ -4,5 +4,6 @@ namespace NotificationBackend.Models
     {
         public string title { get; set; }
         public string body { get; set; }
+        public string typeId { get; set; }
     }
 }

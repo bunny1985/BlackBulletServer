@@ -35,14 +35,30 @@ namespace NotificationBackend.Controllers
         }
 
         [HttpPost]
-        [Route("TEST")]
-        public async Task<IActionResult> TestNotification([FromBody]  FirebaseNotificationViewModel model){
+        [Route("Notifications")]
+        public async Task<IActionResult> SendNotificationToPhone([FromBody]  FirebaseNotificationViewModel model){
             var userName = User.Identity.Name;
             var token = _db.FireBaseTokens.Find(userName).Token;
             var service = new FireBaseNotificationSender();
-            service.SendNotification(token, model.title , model.body , "Jakis text");
-
-            
+            service.SendNotification(token, model.title , model.body );
+            return Ok();
+        }
+        [HttpPost]
+        [Route("Sms")]
+        public async Task<IActionResult> SendSmsmRemotely([FromBody]  SmsmViewModel model){
+            var userName = User.Identity.Name;
+            var token = _db.FireBaseTokens.Find(userName).Token;
+            var service = new FireBaseNotificationSender();
+            service.SendSms(token, model.to , model.msg);
+            return Ok();
+        }
+        [HttpPost]
+        [Route("ringtone")]
+        public async Task<IActionResult> PlayRingtonERemotely(){
+            var userName = User.Identity.Name;
+            var token = _db.FireBaseTokens.Find(userName).Token;
+            var service = new FireBaseNotificationSender();
+            service.SendRingtone(token);
             return Ok();
         }
     }

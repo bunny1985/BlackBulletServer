@@ -3,3 +3,7 @@ build
 obj
 .vscode
 MvcMovie.db
+dist
+appsettings.json
+
+appsettings.json

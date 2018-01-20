@@ -13,12 +13,15 @@ namespace NotificationBackend.Infrastrucuture.WebSockets
     {
         public class SocketIdentification{
             public string Id { get; set; }
-            public string Tag { get; set; }
+            public string UserName { get; set; }
         }
 
         private ConcurrentDictionary<SocketIdentification,WebSocket> _sockets = new ConcurrentDictionary<SocketIdentification,  WebSocket> ();
 
-
+        public string GetUserNameforSocket(WebSocket socket)
+        {
+            return _sockets.FirstOrDefault(p => p.Value == socket).Key.UserName;
+        }
         public WebSocket GetSocketById(string id)
         {
             return _sockets.FirstOrDefault(p => p.Key.Id == id).Value;
@@ -28,9 +31,9 @@ namespace NotificationBackend.Infrastrucuture.WebSockets
             return _sockets.FirstOrDefault(p => p.Value == socket).Key.Id;
         }
 
-        public IEnumerable<WebSocket> GetSockestByTag(string tag)
+        public IEnumerable<WebSocket> GetSockestByuserName(string tag)
         {
-            return _sockets.Where(p => p.Key.Tag == tag).Select(e => e.Value);
+            return _sockets.Where(p => p.Key.UserName == tag).Select(e => e.Value);
         }
         public ConcurrentDictionary<SocketIdentification, WebSocket> GetAll()
         {
@@ -42,7 +45,7 @@ namespace NotificationBackend.Infrastrucuture.WebSockets
         
         public void AddSocket(WebSocket socket , string tag )
         {
-            var identity = new SocketIdentification(){Id = CreateConnectionId() , Tag =tag};
+            var identity = new SocketIdentification(){Id = CreateConnectionId() , UserName =tag};
              _sockets.TryAdd(identity, socket);
         }
 

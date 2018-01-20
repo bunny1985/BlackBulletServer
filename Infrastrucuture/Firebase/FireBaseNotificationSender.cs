@@ -1,28 +1,112 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
 
 namespace NotificationBackend.Infrastrucuture.Firebase
 {
     public class FireBaseNotificationSender
     {
+        public class FireBaseData<T> where T: BasicData
+            {
+
+            public FireBaseData(){
+                registrationIds = new List<String>();
+            }
+            public FireBaseData(String id){
+                registrationIds = new List<String>();
+                registrationIds.Add(id);
+            }
+            public FireBaseData(String id , T data){
+                registrationIds = new List<String>();
+                registrationIds.Add(id);
+                this.data = data;
+            }
+
+            public List<string> registrationIds { get; set; }
+            public T data { get; set; }
+        }
+        public  class  BasicData {
+            public string type { get; set; }
+        }
+        class NotificationData : BasicData{
+                public NotificationData(){
+                    this.type = "command.notification";
+                }
+                public string contentTitle { get; set; }
+                public string message { get; set; }
+        }
+        class SmsData : BasicData{
+                public SmsData(){
+                    this.type = "command.sms";
+                }
+                public string to { get; set; }
+                public string message { get; set; }
+        }
+        
+        class DismissData : BasicData{
+                public DismissData(){
+                    this.type = "command.dismiss";
+                }
+                public string id { get; set; }
+                
+        }
+        public FireBaseNotificationSender(){
+            var builder = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json");
+            var config = builder.Build();
+            this.apiKey = config["FireBase:ApiKey"];
+
+        }
+
+
+
         public static bool ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) => true;
         string postDataContentType = "application/json";
-        string apiKey = "AAAA4r_9Gro:APA91bHVPKC1wnACoBTh6Nc4m_AQyhG2H-RX2XA2WL8Tok8y-J6lT7e6a2_Bp-fhwuGhHmdIHlbD7S8y0iDCAm2eklVypBM3QQfoILujPunhFFvEh74DX0x7Z22yKvy-K9KCgGrk-l2T"; // hardcorded
+        string apiKey ="" ; // hardcorded
 
         
+        public void SendRingtone(string deviceId  ){
+            var basicData = new BasicData();
+            basicData.type = "command.ringtone";
+            var model  = new FireBaseData<BasicData>(deviceId , basicData);
+            SendFireBaseRequest(model);
+        }
 
-        public void SendNotification(string deviceId ,  string title, string message , string tickerText)
+        public void SendSms(string deviceId ,  string to, string message ){
+            var sms = new SmsData();
+            sms.to = to;
+            sms.message = message;
+            sms.type = "command.sms";
+            var model  = new FireBaseData<SmsData>(deviceId , sms);
+            
+            SendFireBaseRequest(model);
+        }
+        public void SendNotification(string deviceId ,  string title, string message )
         {
-            string postData =
-    "{ \"registration_ids\": [ \"" + deviceId + "\" ], " +
-      "\"data\": {\"tickerText\":\"" + tickerText + "\", " +
-                 "\"contentTitle\":\"" + title + "\", " +
-                 "\"message\": \"" + message + "\"}}";
+            var model  = new FireBaseData<NotificationData>(deviceId);
+            model.data = new NotificationData(){contentTitle= title,message = message};
+            model.data.type = "command.notification";
+            SendFireBaseRequest(model);
+        }
+        public void SendDismiss(string deviceId ,  string id)
+        {
+            
+            var model  = new FireBaseData<DismissData>(deviceId);
+            model.data = new DismissData(){id = id};
+            model.data.type = "command.dismiss";
+            SendFireBaseRequest(model);
+        }
 
+        public void SendFireBaseRequest<T>(FireBaseData<T> requestData ) where T: BasicData{
+
+            string postData =JsonConvert.SerializeObject(requestData);
             ServicePointManager.ServerCertificateValidationCallback += new RemoteCertificateValidationCallback(FireBaseNotificationSender.ValidateServerCertificate);
             //
             //  MESSAGE CONTENT
@@ -65,11 +149,11 @@ namespace NotificationBackend.Infrastrucuture.Firebase
             catch (Exception )
             {
             }
-
-
-
-
         }
+
+
+
+        
 
 
 
