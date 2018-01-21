@@ -55,6 +55,13 @@ namespace NotificationBackend.Controllers
                 if(count>0)return Ok(new{ Ok= true});
                 return Ok(new{ Ok= false});
         }
+        [HttpPost]
+        [Route("Battery")]
+        public async Task<IActionResult> SendBatterySatatus([FromBody] BatteryStatusViewModel model){
+            await _websocketHandler.SendMessageToAllSocketsWithTagAsync(User.Identity.Name , JsonConvert.SerializeObject(model));
+            return Ok();
+        }
+
 
         [HttpGet]
         [Route("")]
