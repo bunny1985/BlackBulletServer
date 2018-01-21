@@ -56,9 +56,9 @@ namespace NotificationBackend.Infrastrucuture.WebSockets
             _sockets.TryRemove(sockedKey, out socket);
             
 
-            await socket.CloseAsync(closeStatus: WebSocketCloseStatus.NormalClosure, 
+            socket.CloseAsync(closeStatus: WebSocketCloseStatus.NormalClosure, 
                                     statusDescription: "Closed by the WebSocketManager", 
-                                    cancellationToken: CancellationToken.None);
+                                    cancellationToken: CancellationToken.None).Start();
         }
 
         private string CreateConnectionId()

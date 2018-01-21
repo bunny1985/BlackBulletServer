@@ -14,17 +14,16 @@ namespace NotificationBackend.Infrastrucuture.Firebase
     {
         public class FireBaseData<T> where T: BasicData
             {
+            public string to { get; set; }
 
             public FireBaseData(){
-                registrationIds = new List<String>();
+                
             }
             public FireBaseData(String id){
-                registrationIds = new List<String>();
-                registrationIds.Add(id);
+                this.to = id;
             }
             public FireBaseData(String id , T data){
-                registrationIds = new List<String>();
-                registrationIds.Add(id);
+                this.to = id;
                 this.data = data;
             }
 
@@ -61,7 +60,7 @@ namespace NotificationBackend.Infrastrucuture.Firebase
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json");
             var config = builder.Build();
-            this.apiKey = config["FireBase:ApiKey"];
+            this.apiKey = config.GetValue<string>("FireBase:ApiKey");
 
         }
 
@@ -75,6 +74,12 @@ namespace NotificationBackend.Infrastrucuture.Firebase
         public void SendRingtone(string deviceId  ){
             var basicData = new BasicData();
             basicData.type = "command.ringtone";
+            var model  = new FireBaseData<BasicData>(deviceId , basicData);
+            SendFireBaseRequest(model);
+        }
+        public void SendBatteryStatusReques(string deviceId  ){
+            var basicData = new BasicData();
+            basicData.type = "command.battery";
             var model  = new FireBaseData<BasicData>(deviceId , basicData);
             SendFireBaseRequest(model);
         }
@@ -107,14 +112,21 @@ namespace NotificationBackend.Infrastrucuture.Firebase
         public void SendFireBaseRequest<T>(FireBaseData<T> requestData ) where T: BasicData{
 
             string postData =JsonConvert.SerializeObject(requestData);
-            ServicePointManager.ServerCertificateValidationCallback += new RemoteCertificateValidationCallback(FireBaseNotificationSender.ValidateServerCertificate);
+            
             //
             //  MESSAGE CONTENT
             byte[] byteArray = Encoding.UTF8.GetBytes(postData);
 
             //
             //  CREATE REQUEST
-            HttpWebRequest Request = (HttpWebRequest)WebRequest.Create("https://android.googleapis.com/gcm/send");
+            
+
+            //
+            //  SEND MESSAGE
+            try
+            {
+                ServicePointManager.ServerCertificateValidationCallback += new RemoteCertificateValidationCallback(FireBaseNotificationSender.ValidateServerCertificate);
+                HttpWebRequest Request = (HttpWebRequest)WebRequest.Create("https://android.googleapis.com/gcm/send");
             Request.Method = "POST";
             Request.KeepAlive = false;
             Request.ContentType = postDataContentType;
@@ -124,11 +136,6 @@ namespace NotificationBackend.Infrastrucuture.Firebase
             Stream dataStream = Request.GetRequestStream();
             dataStream.Write(byteArray, 0, byteArray.Length);
             dataStream.Close();
-
-            //
-            //  SEND MESSAGE
-            try
-            {
                 WebResponse Response = Request.GetResponse();
                 HttpStatusCode ResponseCode = ((HttpWebResponse)Response).StatusCode;
                 if (ResponseCode.Equals(HttpStatusCode.Unauthorized) || ResponseCode.Equals(HttpStatusCode.Forbidden))

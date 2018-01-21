@@ -41,12 +41,20 @@ namespace NotificationBackend.Infrastrucuture.WebSockets
         }
         public async override Task ReceiveAsync(WebSocket socket, WebSocketReceiveResult result, byte[] buffer)
         {
+
+            
             var r = new  DbContextOptionsBuilder<MyDbContext>().UseSqlite("Data Source=MvcMovie.db");
             _db = new MyDbContext(r.Options) ;
 
             var userName = _webSocketConnectionManager.GetUserNameforSocket(socket);
             var text= System.Text.Encoding.UTF8.GetString(buffer);
-            var model = JsonConvert.DeserializeObject<BasicModel>(text);
+            BasicModel  model;
+            try{
+                model =  JsonConvert.DeserializeObject<BasicModel>(text);
+            }catch(Exception e){
+                return;
+            }
+            
             var token = _db.FireBaseTokens.Find(userName).Token;
             if(model.type == "sms"){
                  var smsmodel = JsonConvert.DeserializeObject<SmsModel>(text);
@@ -59,6 +67,8 @@ namespace NotificationBackend.Infrastrucuture.WebSockets
             }else if( model.type == "dismiss"){
                 var dismissModel = JsonConvert.DeserializeObject<DismissMode>(text);
                 _fireBaseNotificationSender.SendDismiss(token, dismissModel.id );
+            }else if( model.type == "battery"){
+                _fireBaseNotificationSender.SendBatteryStatusReques(token);
             }
             await SendMessageAsync(socket , "{\"status\": \"ok\"}" );
 
