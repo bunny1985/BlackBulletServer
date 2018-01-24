@@ -4,6 +4,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Serilog;
 
 namespace NotificationBackend.Infrastrucuture.WebSockets
 {
@@ -29,6 +30,7 @@ namespace NotificationBackend.Infrastrucuture.WebSockets
 
         public async Task SendMessageToAllSocketsWithTagAsync(string tag , string message)
         {
+            Log.Logger.Information("WebSocket: I said to {tag} : {message} " , tag,  message);
             var sockets = _webSocketConnectionManager.GetSockestByuserName(tag);
             foreach (var socket in sockets)
             {
@@ -44,6 +46,8 @@ namespace NotificationBackend.Infrastrucuture.WebSockets
         }
         public async Task SendMessageAsync(WebSocket socket, string message)
         {
+
+
             if(socket.State != WebSocketState.Open)
                 return;
             try{
@@ -53,6 +57,7 @@ namespace NotificationBackend.Infrastrucuture.WebSockets
                                    messageType: WebSocketMessageType.Text,
                                    endOfMessage: true,
                                    cancellationToken: CancellationToken.None);          
+            
             }catch(Exception){
                 await _webSocketConnectionManager.RemoveSocket(_webSocketConnectionManager.GetId(socket));
             }

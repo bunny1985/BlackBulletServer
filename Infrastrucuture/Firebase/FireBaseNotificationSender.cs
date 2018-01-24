@@ -7,6 +7,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
+using Serilog;
 
 namespace NotificationBackend.Infrastrucuture.Firebase
 {
@@ -132,7 +133,7 @@ namespace NotificationBackend.Infrastrucuture.Firebase
             Request.ContentType = postDataContentType;
             Request.Headers.Add(string.Format("Authorization: key={0}", apiKey));
             Request.ContentLength = byteArray.Length;
-
+            Log.Logger.Information("Firebase Request:" + postData);
             Stream dataStream = Request.GetRequestStream();
             dataStream.Write(byteArray, 0, byteArray.Length);
             dataStream.Close();
@@ -155,6 +156,7 @@ namespace NotificationBackend.Infrastrucuture.Firebase
             }
             catch (Exception )
             {
+                Log.Logger.Error("Error While Sending firebase data ");
             }
         }
 

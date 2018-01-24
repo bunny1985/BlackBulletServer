@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using NotificationBackend.Infrastrucuture.Database;
 using NotificationBackend.Infrastrucuture.Firebase;
+using Serilog;
 
 namespace NotificationBackend.Infrastrucuture.WebSockets
 {
@@ -48,6 +49,7 @@ namespace NotificationBackend.Infrastrucuture.WebSockets
 
             var userName = _webSocketConnectionManager.GetUserNameforSocket(socket);
             var text= System.Text.Encoding.UTF8.GetString(buffer);
+            Log.Logger.Information("WebSocket: {userName} said : {text} " , userName ,  text);
             BasicModel  model;
             try{
                 model =  JsonConvert.DeserializeObject<BasicModel>(text);
@@ -59,8 +61,8 @@ namespace NotificationBackend.Infrastrucuture.WebSockets
             if(model.type == "sms"){
                  var smsmodel = JsonConvert.DeserializeObject<SmsModel>(text);
                  _fireBaseNotificationSender.SendSms(token, smsmodel.to , smsmodel.text);
-            }else if( model.type == "share"){
-                var sharemodel = JsonConvert.DeserializeObject<SmsModel>(text);
+            }else if( model.type == "notification"){
+                var sharemodel = JsonConvert.DeserializeObject<TextModel>(text);
                 _fireBaseNotificationSender.SendNotification(token, "Incoming Mesage" , sharemodel.text );
             }else if( model.type == "ringtone"){
                 _fireBaseNotificationSender.SendRingtone(token );

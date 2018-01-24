@@ -7,3 +7,9 @@ dist
 appsettings.json
 
 appsettings.json
+
+install\.sh
+
+remote\.sh
+
+*.txt
