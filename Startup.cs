@@ -59,6 +59,7 @@ namespace NotificationBackend
             {
                 app.UseDeveloperExceptionPage();
             }
+            app.UseDefaultFiles();
             app.UseStaticFiles();
 
             app.UseAuthentication();
