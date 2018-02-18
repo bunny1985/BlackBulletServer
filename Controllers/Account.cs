@@ -69,21 +69,22 @@ namespace NotificationBackend.Controllers
                 }
                 if (result.RequiresTwoFactor)
                 {
-                    return Ok("TWO FACTOR???");
+                    return BadRequest("TWO FACTOR???");
                 }
                 if (result.IsLockedOut)
                 {
                     
-                    return Ok("LOCKED");
+                    return BadRequest("LOCKED");
                 }
                 else
                 {
                     return BadRequest("Invalid name or password");
                 }
+                
             }
-
+            return BadRequest();
             // If we got this far, something failed, redisplay form
-            return Ok(model);
+            
         }
 
     }

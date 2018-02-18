@@ -55,6 +55,11 @@ namespace NotificationBackend
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, IServiceProvider serviceProvider , ILoggerFactory loggerFactory)
         {
             app.UseMiddleware<SerilogMiddleware>();
+            app.UseCors(builder =>
+                builder.WithOrigins("http://localhost:8080")
+                .AllowAnyHeader().AllowCredentials().AllowAnyMethod().Build()
+            );  
+            
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

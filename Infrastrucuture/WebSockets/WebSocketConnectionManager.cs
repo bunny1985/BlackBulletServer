@@ -55,10 +55,14 @@ namespace NotificationBackend.Infrastrucuture.WebSockets
             var sockedKey = _sockets.First(s => s.Key.Id==id).Key;
             _sockets.TryRemove(sockedKey, out socket);
             
-
+            try{
             socket.CloseAsync(closeStatus: WebSocketCloseStatus.NormalClosure, 
                                     statusDescription: "Closed by the WebSocketManager", 
                                     cancellationToken: CancellationToken.None).Start();
+            }catch{
+                
+            }
+
         }
 
         private string CreateConnectionId()
